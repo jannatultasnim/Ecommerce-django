@@ -70,8 +70,11 @@
                         <hr>
                         {% if single_products.stock <= 0 %}
                             <h5>Out of Stock</h5>
+                        {% elif in_cart == True %}
+                            <a href="{% url 'cart' %}" class="btn btn-success"> <span class="text">Added to cart</span>
+                                <i class="fas fa-check"></i> </a>
                             {% else %}
-                                <a href="./product-detail.html" class="btn  btn-primary"> <span class="text">Add to cart</span>
+                                <a href="{% url 'add_to_cart' single_products.id %}" class="btn  btn-primary"> <span class="text">Add to cart</span>
                             <i class="fas fa-shopping-cart"></i> </a>
                             {% endif %}
                     </article> <!-- product-info-aside .// -->
