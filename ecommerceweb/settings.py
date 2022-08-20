@@ -67,6 +67,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'category.conetxt-processors.menu_links',
+                'cart.context-processors.counter',
             ],
         },
     },
