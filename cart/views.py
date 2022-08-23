@@ -4,7 +4,7 @@ from Store.models import Product,Variation
 from . models import Cart, CartItem
 
 # Create your views here.
-def _cart_id(request):
+def _cart_id(request): # get cart id from the session id
     cart = request.session.session_key
     if not cart:
         cart = request.session.create()
@@ -72,9 +72,9 @@ def add_cart (request,product_id):
     
     return redirect('cart')
 
-def remove_cart(request,product_id,cart_item_id):
-    cart = Cart.objects.get(cart_id = _cart_id(request))
-    product = get_object_or_404(Product,id=product_id)
+def remove_cart(request,product_id,cart_item_id): # remove the quantity of items in the cart
+    cart = Cart.objects.get(cart_id = _cart_id(request)) #get the id of cart from the session
+    product = get_object_or_404(Product,id=product_id) #get the product id from the product model
     try:
 
         cart_items = CartItem.objects.get(product=product,cart=cart,id=cart_item_id)
@@ -86,7 +86,7 @@ def remove_cart(request,product_id,cart_item_id):
     except:
         pass
     return redirect ('cart')
-def remove_cart_item(request,product_id,cart_item_id):
+def remove_cart_item(request,product_id,cart_item_id): # remove cart items
     cart = Cart.objects.get(cart_id = _cart_id(request))
     product = get_object_or_404(Product,id=product_id)
     cart_items = CartItem.objects.get(product=product,cart=cart,id=cart_item_id)
@@ -94,7 +94,7 @@ def remove_cart_item(request,product_id,cart_item_id):
     return redirect('cart')
 
 
-def cart(request, total = 0, quantity=0, cart_items=None):
+def cart(request, total = 0, quantity=0, cart_items=None): #creates cart
     try:
         cart = Cart.objects.get(cart_id =_cart_id(request))
         cart_items = CartItem.objects.filter(cart=cart,is_active=True)
