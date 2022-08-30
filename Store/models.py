@@ -23,6 +23,7 @@ class Product(models.Model):
     def __str__(self):
         return self.product_name
 
+#product variation model manager
 class VariationManager(models.Manager):
 
     def colors(self):
@@ -31,7 +32,7 @@ class VariationManager(models.Manager):
     def sizes(self):
         return super(VariationManager,self).filter(variation_category='size',is_active=True)
 
-
+#product variation model
 variation_category_choice = (
     ('color','color'),
     ('size', 'size'),

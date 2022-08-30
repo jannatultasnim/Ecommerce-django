@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+
 from django.shortcuts import render,redirect,get_object_or_404
 from Store.models import Product,Variation
 from . models import Cart, CartItem
@@ -103,8 +103,8 @@ def cart(request, total = 0, quantity=0, cart_items=None): #creates cart
             quantity += i.quantity
         tax_amount  = (2*total/100)
         grand_total = total+tax_amount
-    except CartItem.DoesNotExist:
-        pass
+    except:
+        return render(request,'store/cart.html')
     context = {
         'total': total,
         'quantity': quantity,
