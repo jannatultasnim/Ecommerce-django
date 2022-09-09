@@ -1,9 +1,12 @@
-from email import message
 from email.message import EmailMessage
+from posixpath import split
 from django.contrib import messages,auth
 from django.shortcuts import render, redirect
 from .forms import RegistrationForm
 from .models import Account
+from cart.models import Cart
+from cart.views import _cart_id
+from cart.models import CartItem
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
@@ -14,12 +17,15 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMessage
-
+import requests
 
 # Create your views here.
 def Register(request): #USER REGISTRATION / SIGN UP
+    
+
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
+
         if form.is_valid():
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
@@ -58,16 +64,65 @@ def Register(request): #USER REGISTRATION / SIGN UP
 
     return render (request,'account/register.html', context)
 
+
 def Login(request):
     if request.method == "POST":
         email = request.POST['email']  #get the email
         password = request.POST.get('password')
         user = auth.authenticate(email=email,password=password)
         if user is not None:
+            try:
+                cart = Cart.objects.get(cart_id=_cart_id(request))
+                is_cart_item_exists = CartItem.objects.filter( cart=cart).exists()
+                if is_cart_item_exists:
+                    cart_item = CartItem.objects.filter(cart=cart)
+                    #getting product variation by cart id
+                    variation_product = []
+                    for item in cart_item:
+                        ex_variation = item.variation.all()
+                        variation_product.append(list(ex_variation))
+                    #get cart items from user to access his product variation
+                    cart_item = CartItem.objects.filter(user=user)
+                    ex_var_list=[]
+                    id = []
+                    for item in cart_item:
+                        existing_variation = item.variation.all()
+                        ex_var_list.append(list(existing_variation))
+                        id.append(item.id)
+                    # checking common variations of products by comparing cart variation and user variation list
+                    for product in variation_product:
+                        if product in ex_var_list:
+                            index = ex_var_list.index(product)
+                            item_id = id[index]
+                            item = CartItem.objects.get(id=item_id)
+                            item.quantity+=1
+                            item.user = user
+                            item.save()
+                        else:
+                            cart_item=CartItem.objects.filter(cart=cart)
+                            for item in cart_item:
+                                item.user = user #assigning the user for a cart
+                                item.save()
+
+            except:
+                pass
             auth.login(request,user)
-            return redirect('Home')
+            
+            url = request.META.get('HTTP_REFERER')
+            try:
+                query = requests.utils.urlparse(url).query
+                print("query--->>",query)
+                #next=/cart/checkout/
+                params =dict(x.split('=') for x in query.split('&'))
+                if 'next' in params:
+                    next_page = params['next']
+                    return redirect(next_page)
+              
+            except:
+                return redirect('dashboard')
+                
         else:
-            messages.error(request,'No such email exists')
+            messages.error(request,'Incorrect email or password')
             return redirect('login')
     
     
@@ -98,10 +153,12 @@ def activate(request,uidb64,token):
         messages.error(request,'invalid activation link')
         return redirect('register')
 
+
 @login_required(login_url='login')
 def Dashboard(request):
 
     return render (request,'account/dashboard.html')
+
 
 def forgot_password(request):
     if request.method == 'POST':
